@@ -1,0 +1,13 @@
+{
+  "name": "fast-text",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "chrome-types": "^0.1.413"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
