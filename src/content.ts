@@ -111,73 +111,33 @@ function createFloatingWindow(): HTMLElement {
          gap: 0;
        }
        #fast-text-display-inner {
-         display: flex;
-         justify-content: center;
-         align-items: center;
-         position: relative;
-       }
-       .fast-text-gun-sight {
-         position: absolute;
-         left: 50%;
-         transform: translateX(-50%);
-         width: 200px;
-         height: 100%;
-         pointer-events: none;
-         z-index: 1;
-       }
-       .fast-text-gun-sight-line {
-         position: absolute;
-         width: 2px;
-         background: #ff0000;
-         opacity: 0.6;
-       }
-       .fast-text-gun-sight-line-top {
-         top: 0;
-         height: 25%;
-         left: 50%;
-         transform: translateX(-50%);
-       }
-       .fast-text-gun-sight-line-bottom {
-         bottom: 0;
-         height: 25%;
-         left: 50%;
-         transform: translateX(-50%);
-       }
-       .fast-text-gun-sight-hline {
-         position: absolute;
-         height: 1px;
-         background: #ff0000;
-         opacity: 0.4;
-         left: 50%;
-         transform: translateX(-50%);
-       }
-       .fast-text-gun-sight-hline-top {
-         top: 25%;
-         width: 40px;
-       }
-       .fast-text-gun-sight-hline-bottom {
-         bottom: 25%;
-         width: 40px;
-       }
-       #fast-text-word-container {
-         display: flex;
-         justify-content: center;
-         align-items: center;
-         position: relative;
-         z-index: 2;
-       }
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: relative;
+        }
+        #fast-text-word-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: relative;
+          width: 100%;
+          font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
+        }
+        #fast-text-anchor {
+          color: #ff4444;
+          font-weight: bold;
+          display: inline;
+          z-index: 2;
+        }
+        #fast-text-before, #fast-text-after {
+          display: inline;
+          color: #666;
+        }
        #fast-text-floating-window.fast-text-fullscreen #fast-text-display {
          font-size: 48px;
          min-height: 140px;
        }
-      #fast-text-anchor {
-        color: #ff4444;
-        font-weight: bold;
-        display: inline;
-      }
-      #fast-text-before, #fast-text-after {
-        display: inline;
-      }
       #fast-text-controls {
         display: flex;
         gap: 16px;
@@ -237,18 +197,16 @@ function createFloatingWindow(): HTMLElement {
     </div>
     <div id="fast-text-body">
       <div id="fast-text-progress-section">
-        <div id="fast-text-progress"><div id="fast-text-progress-bar"></div></div>
+        <div id="fast-text-progress">
+          <div id="fast-text-progress-bar"></div>
+        </div>
         <div id="fast-text-word-counter"></div>
       </div>
-       <div id="fast-text-display">
-         <div class="fast-text-gun-sight">
-           <div class="fast-text-gun-sight-line fast-text-gun-sight-line-top"></div>
-           <div class="fast-text-gun-sight-hline fast-text-gun-sight-hline-top"></div>
-           <div class="fast-text-gun-sight-hline fast-text-gun-sight-hline-bottom"></div>
-           <div class="fast-text-gun-sight-line fast-text-gun-sight-line-bottom"></div>
-         </div>
-         <div id="fast-text-word-container"><span id="fast-text-placeholder">No text selected</span></div>
-       </div>
+        <div id="fast-text-display">
+           <div id="fast-text-word-container">
+            <span id="fast-text-placeholder">No text selected</span>
+          </div>
+        </div>
       <div id="fast-text-controls">
         <button id="fast-text-play-btn">▶</button>
         <div id="fast-text-speed-control">
@@ -285,7 +243,6 @@ function showFloatingWindow(text: string): void {
 function renderDisplay(display: FastTextDisplay): void {
   if (!floatingWindow) return;
 
-  const displayEl = floatingWindow.querySelector("#fast-text-display") as HTMLElement;
   const wordContainer = floatingWindow.querySelector("#fast-text-word-container") as HTMLElement;
   const progressBar = floatingWindow.querySelector("#fast-text-progress-bar") as HTMLElement;
   const wordCounter = floatingWindow.querySelector("#fast-text-word-counter") as HTMLElement;
@@ -294,10 +251,30 @@ function renderDisplay(display: FastTextDisplay): void {
     wordContainer.innerHTML = `<span id="fast-text-placeholder">No text selected</span>`;
   } else {
     wordContainer.innerHTML = `
-      <span id="fast-text-before">${escapeHtml(display.before)}</span>
-      <span id="fast-text-anchor">${escapeHtml(display.anchor)}</span>
-      <span id="fast-text-after">${escapeHtml(display.after)}</span>
+      <span id="fast-text-before">${escapeHtml(display.before)}</span><span id="fast-text-anchor">${escapeHtml(display.anchor)}</span><span id="fast-text-after">${escapeHtml(display.after)}</span>
     `;
+
+    requestAnimationFrame(() => {
+      const beforeSpan = wordContainer.querySelector("#fast-text-before") as HTMLElement;
+      const afterSpan = wordContainer.querySelector("#fast-text-after") as HTMLElement;
+      const anchorSpan = wordContainer.querySelector("#fast-text-anchor") as HTMLElement;
+
+      if (beforeSpan && afterSpan && anchorSpan) {
+        const beforeWidth = beforeSpan.offsetWidth;
+        const afterWidth = afterSpan.offsetWidth;
+        const anchorWidth = anchorSpan.offsetWidth;
+        const containerWidth = wordContainer.offsetWidth;
+
+        const beforeOffset = Math.max(0, (containerWidth / 2) - (anchorWidth / 2) - beforeWidth - 4);
+        const afterOffset = Math.max(0, (containerWidth / 2) + (anchorWidth / 2) + 4);
+
+        beforeSpan.style.position = 'absolute';
+        beforeSpan.style.left = `${beforeOffset}px`;
+
+        afterSpan.style.position = 'absolute';
+        afterSpan.style.left = `${afterOffset}px`;
+      }
+    });
   }
 
   progressBar.style.width = `${display.progress}%`;
@@ -426,7 +403,11 @@ function getSelectedText(): string {
   return selection.toString().trim();
 }
 
-function handleMessage(message: { type: string; text?: string }, _sender: unknown, sendResponse: (response?: Record<string, unknown>) => void): void {
+function handleMessage(
+  message: { type: string; text?: string }, 
+  _sender: unknown, 
+  sendResponse: (response?: Record<string, unknown>) => void,
+): void {
   if (message.type === "FAST_TEXT_OPEN") {
     const text = message.text || getSelectedText();
     if (text && text.length > 0) {
