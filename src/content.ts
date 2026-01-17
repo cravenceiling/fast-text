@@ -6,9 +6,9 @@ let isVisible: boolean = false;
 let isFullscreen: boolean = false;
 
 function createFloatingWindow(): HTMLElement {
-    const container = document.createElement("div");
-    container.id = "fast-text-floating-window";
-    container.innerHTML = `
+  const container = document.createElement("div");
+  container.id = "fast-text-floating-window";
+  container.innerHTML = `
     <style>
       #fast-text-floating-window {
         position: fixed;
@@ -95,22 +95,81 @@ function createFloatingWindow(): HTMLElement {
         color: #555;
         font-size: 12px;
       }
-      #fast-text-display {
-        text-align: center;
-        font-size: 30px;
-        line-height: 1.1;
-        color: #ffffff;
-        min-height: 80px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        user-select: none;
-        flex: 1;
-      }
-      #fast-text-floating-window.fast-text-fullscreen #fast-text-display {
-        font-size: 48px;
-        min-height: 140px;
-      }
+       #fast-text-display {
+         text-align: center;
+         font-size: 30px;
+         line-height: 1.1;
+         color: #ffffff;
+         min-height: 80px;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         user-select: none;
+         flex: 1;
+         position: relative;
+         flex-direction: column;
+         gap: 0;
+       }
+       #fast-text-display-inner {
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         position: relative;
+       }
+       .fast-text-gun-sight {
+         position: absolute;
+         left: 50%;
+         transform: translateX(-50%);
+         width: 200px;
+         height: 100%;
+         pointer-events: none;
+         z-index: 1;
+       }
+       .fast-text-gun-sight-line {
+         position: absolute;
+         width: 2px;
+         background: #ff0000;
+         opacity: 0.6;
+       }
+       .fast-text-gun-sight-line-top {
+         top: 0;
+         height: 25%;
+         left: 50%;
+         transform: translateX(-50%);
+       }
+       .fast-text-gun-sight-line-bottom {
+         bottom: 0;
+         height: 25%;
+         left: 50%;
+         transform: translateX(-50%);
+       }
+       .fast-text-gun-sight-hline {
+         position: absolute;
+         height: 1px;
+         background: #ff0000;
+         opacity: 0.4;
+         left: 50%;
+         transform: translateX(-50%);
+       }
+       .fast-text-gun-sight-hline-top {
+         top: 25%;
+         width: 40px;
+       }
+       .fast-text-gun-sight-hline-bottom {
+         bottom: 25%;
+         width: 40px;
+       }
+       #fast-text-word-container {
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         position: relative;
+         z-index: 2;
+       }
+       #fast-text-floating-window.fast-text-fullscreen #fast-text-display {
+         font-size: 48px;
+         min-height: 140px;
+       }
       #fast-text-anchor {
         color: #ff4444;
         font-weight: bold;
@@ -181,7 +240,15 @@ function createFloatingWindow(): HTMLElement {
         <div id="fast-text-progress"><div id="fast-text-progress-bar"></div></div>
         <div id="fast-text-word-counter"></div>
       </div>
-      <div id="fast-text-display"><span id="fast-text-placeholder">No text selected</span></div>
+       <div id="fast-text-display">
+         <div class="fast-text-gun-sight">
+           <div class="fast-text-gun-sight-line fast-text-gun-sight-line-top"></div>
+           <div class="fast-text-gun-sight-hline fast-text-gun-sight-hline-top"></div>
+           <div class="fast-text-gun-sight-hline fast-text-gun-sight-hline-bottom"></div>
+           <div class="fast-text-gun-sight-line fast-text-gun-sight-line-bottom"></div>
+         </div>
+         <div id="fast-text-word-container"><span id="fast-text-placeholder">No text selected</span></div>
+       </div>
       <div id="fast-text-controls">
         <button id="fast-text-play-btn">▶</button>
         <div id="fast-text-speed-control">
@@ -191,221 +258,214 @@ function createFloatingWindow(): HTMLElement {
       </div>
     </div>
   `;
-    return container;
+  return container;
 }
 
 function showFloatingWindow(text: string): void {
-    if (floatingWindow) {
-        floatingWindow.remove();
-    }
+  if (floatingWindow) {
+    floatingWindow.remove();
+  }
 
-    floatingWindow = createFloatingWindow();
-    document.body.appendChild(floatingWindow);
-    isVisible = true;
-    isFullscreen = false;
+  floatingWindow = createFloatingWindow();
+  document.body.appendChild(floatingWindow);
+  isVisible = true;
+  isFullscreen = false;
 
-    player = new FastTextPlayer(
-        renderDisplay,
-        onComplete,
-        { wordsPerMinute: 300 }
-    );
-    player.load(text);
+  player = new FastTextPlayer(
+    renderDisplay,
+    onComplete,
+    { wordsPerMinute: 300 }
+  );
+  player.load(text);
 
-    setupEventListeners();
-    player.renderCurrent();
+  setupEventListeners();
+  player.renderCurrent();
 }
 
 function renderDisplay(display: FastTextDisplay): void {
-    if (!floatingWindow) return;
+  if (!floatingWindow) return;
 
-    const displayEl = floatingWindow.querySelector("#fast-text-display") as HTMLElement;
-    const progressBar = floatingWindow.querySelector("#fast-text-progress-bar") as HTMLElement;
-    const wordCounter = floatingWindow.querySelector("#fast-text-word-counter") as HTMLElement;
+  const displayEl = floatingWindow.querySelector("#fast-text-display") as HTMLElement;
+  const wordContainer = floatingWindow.querySelector("#fast-text-word-container") as HTMLElement;
+  const progressBar = floatingWindow.querySelector("#fast-text-progress-bar") as HTMLElement;
+  const wordCounter = floatingWindow.querySelector("#fast-text-word-counter") as HTMLElement;
 
-    if (display.anchor === "" && display.before === "" && display.after === "") {
-        displayEl.innerHTML = `<span id="fast-text-placeholder">No text selected</span>`;
-    } else {
-        displayEl.innerHTML = `
+  if (display.anchor === "" && display.before === "" && display.after === "") {
+    wordContainer.innerHTML = `<span id="fast-text-placeholder">No text selected</span>`;
+  } else {
+    wordContainer.innerHTML = `
       <span id="fast-text-before">${escapeHtml(display.before)}</span>
       <span id="fast-text-anchor">${escapeHtml(display.anchor)}</span>
       <span id="fast-text-after">${escapeHtml(display.after)}</span>
     `;
-    }
+  }
 
-    progressBar.style.width = `${display.progress}%`;
-    wordCounter.textContent = `${display.currentWord} / ${display.totalWords} words`;
+  progressBar.style.width = `${display.progress}%`;
+  wordCounter.textContent = `${display.currentWord} / ${display.totalWords} words`;
 }
 
 function onComplete(): void {
-    if (!floatingWindow) return;
-    const playBtn = floatingWindow.querySelector("#fast-text-play-btn") as HTMLButtonElement;
-    playBtn.textContent = "▶";
-    const instructions = floatingWindow.querySelector("#fast-text-instructions") as HTMLElement;
-    if (instructions) {
-        instructions.textContent = "Reading complete! Select new text or replay.";
-    }
+  if (!floatingWindow) return;
+  const playBtn = floatingWindow.querySelector("#fast-text-play-btn") as HTMLButtonElement;
+  playBtn.textContent = "▶";
+  const instructions = floatingWindow.querySelector("#fast-text-instructions") as HTMLElement;
+  if (instructions) {
+    instructions.textContent = "Reading complete! Select new text or replay.";
+  }
 }
 
 function escapeHtml(text: string): string {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 function toggleFullscreen(): void {
-    if (!floatingWindow) return;
-    isFullscreen = !isFullscreen;
-    floatingWindow.classList.toggle("fast-text-fullscreen", isFullscreen);
+  if (!floatingWindow) return;
+  isFullscreen = !isFullscreen;
+  floatingWindow.classList.toggle("fast-text-fullscreen", isFullscreen);
 }
 
 function setupEventListeners(): void {
-    if (!floatingWindow) return;
+  if (!floatingWindow) return;
 
-    const closeBtn = floatingWindow.querySelector("#fast-text-close-btn") as HTMLButtonElement;
-    const fullscreenBtn = floatingWindow.querySelector("#fast-text-fullscreen-btn") as HTMLButtonElement;
-    const playBtn = floatingWindow.querySelector("#fast-text-play-btn") as HTMLButtonElement;
-    const speedSlider = floatingWindow.querySelector("#fast-text-speed-slider") as HTMLInputElement;
-    const wpmDisplay = floatingWindow.querySelector("#fast-text-wpm-display") as HTMLElement;
+  const closeBtn = floatingWindow.querySelector("#fast-text-close-btn") as HTMLButtonElement;
+  const fullscreenBtn = floatingWindow.querySelector("#fast-text-fullscreen-btn") as HTMLButtonElement;
+  const playBtn = floatingWindow.querySelector("#fast-text-play-btn") as HTMLButtonElement;
+  const speedSlider = floatingWindow.querySelector("#fast-text-speed-slider") as HTMLInputElement;
+  const wpmDisplay = floatingWindow.querySelector("#fast-text-wpm-display") as HTMLElement;
 
-    closeBtn.addEventListener("click", (e: Event) => {
-        e.stopPropagation();
-        closeWindow();
-    });
+  closeBtn.addEventListener("click", (e: Event) => {
+    e.stopPropagation();
+    closeWindow();
+  });
 
-    fullscreenBtn.addEventListener("click", (e: Event) => {
-        e.stopPropagation();
-        toggleFullscreen();
-    });
+  fullscreenBtn.addEventListener("click", (e: Event) => {
+    e.stopPropagation();
+    toggleFullscreen();
+  });
 
-    playBtn.addEventListener("click", (e: Event) => {
-        e.stopPropagation();
-        if (player) {
-            player.toggle();
-            playBtn.textContent = player.getIsPlaying() ? "⏸" : "▶";
-            const instructions = floatingWindow?.querySelector("#fast-text-instructions") as HTMLElement;
-            if (instructions) {
-                instructions.classList.add("fast-text-hidden");
-            }
-        }
-    });
+  playBtn.addEventListener("click", (e: Event) => {
+    e.stopPropagation();
+    if (player) {
+      player.toggle();
+      playBtn.textContent = player.getIsPlaying() ? "⏸" : "▶";
+      const instructions = floatingWindow?.querySelector("#fast-text-instructions") as HTMLElement;
+      if (instructions) {
+        instructions.classList.add("fast-text-hidden");
+      }
+    }
+  });
 
-    speedSlider.addEventListener("input", (e: Event) => {
-        e.stopPropagation();
-        const target = e.target as HTMLInputElement;
-        const wpm = parseInt(target.value);
-        if (player) {
-            player.setWPM(wpm);
-            wpmDisplay.textContent = `${wpm} WPM`;
-        }
-    });
+  speedSlider.addEventListener("input", (e: Event) => {
+    e.stopPropagation();
+    const target = e.target as HTMLInputElement;
+    const wpm = parseInt(target.value);
+    if (player) {
+      player.setWPM(wpm);
+      wpmDisplay.textContent = `${wpm} WPM`;
+    }
+  });
 
-    floatingWindow.addEventListener("click", (e: Event) => {
-        e.stopPropagation();
-    });
+  floatingWindow.addEventListener("click", (e: Event) => {
+    e.stopPropagation();
+  });
 
-    document.addEventListener("keydown", handleKeydown);
+  document.addEventListener("keydown", handleKeydown);
 
-    document.addEventListener("click", handleOutsideClick);
+  document.addEventListener("click", handleOutsideClick);
 }
 
 function handleKeydown(e: KeyboardEvent): void {
-    if (!isVisible || !floatingWindow) return;
+  if (!isVisible || !floatingWindow) return;
 
-    if (e.key === " " || e.key === "k") {
-        e.preventDefault();
-        if (player) {
-            player.toggle();
-            const playBtn = floatingWindow.querySelector("#fast-text-play-btn") as HTMLButtonElement;
-            if (playBtn) {
-                playBtn.textContent = player.getIsPlaying() ? "⏸" : "▶";
-            }
-        }
-    } else if (e.key === "Escape") {
-        if (isFullscreen) {
-            toggleFullscreen();
-        } else {
-            closeWindow();
-        }
-    } else if (e.key === "f" || e.key === "F") {
-        toggleFullscreen();
+  if (e.key === " " || e.key === "k") {
+    e.preventDefault();
+    if (player) {
+      player.toggle();
+      const playBtn = floatingWindow.querySelector("#fast-text-play-btn") as HTMLButtonElement;
+      if (playBtn) {
+        playBtn.textContent = player.getIsPlaying() ? "⏸" : "▶";
+      }
     }
+  } else if (e.key === "Escape") {
+    if (isFullscreen) {
+      toggleFullscreen();
+    } else {
+      closeWindow();
+    }
+  } else if (e.key === "f" || e.key === "F") {
+    toggleFullscreen();
+  }
 }
 
 function handleOutsideClick(e: MouseEvent): void {
-    if (floatingWindow && !floatingWindow.contains(e.target as Node)) {
-        return;
-    }
+  if (floatingWindow && !floatingWindow.contains(e.target as Node)) {
+    return;
+  }
 }
 
 function closeWindow(): void {
-    if (player) {
-        player.pause();
-        player = null;
-    }
-    if (floatingWindow) {
-        floatingWindow.remove();
-        floatingWindow = null;
-    }
-    isVisible = false;
-    isFullscreen = false;
-    document.removeEventListener("click", handleOutsideClick);
-    document.removeEventListener("keydown", handleKeydown);
+  if (player) {
+    player.pause();
+    player = null;
+  }
+  if (floatingWindow) {
+    floatingWindow.remove();
+    floatingWindow = null;
+  }
+  isVisible = false;
+  isFullscreen = false;
+  document.removeEventListener("click", handleOutsideClick);
+  document.removeEventListener("keydown", handleKeydown);
 }
 
 function getSelectedText(): string {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return "";
-    return selection.toString().trim();
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return "";
+  return selection.toString().trim();
 }
 
 function handleMessage(message: { type: string; text?: string }, _sender: unknown, sendResponse: (response?: Record<string, unknown>) => void): void {
-    if (message.type === "FAST_TEXT_OPEN") {
-        const text = message.text || getSelectedText();
-        if (text && text.length > 0) {
-            showFloatingWindow(text);
-            sendResponse({ success: true });
-        } else {
-            sendResponse({ success: false, error: "No text selected" });
-        }
-    } else if (message.type === "FAST_TEXT_TOGGLE") {
-        if (isVisible && player) {
-            player.toggle();
-            const playBtn = floatingWindow?.querySelector("#fast-text-play-btn") as HTMLButtonElement;
-            if (playBtn) {
-                playBtn.textContent = player.getIsPlaying() ? "⏸" : "▶";
-            }
-            sendResponse({ success: true, isPlaying: player.getIsPlaying() });
-        } else {
-            const text = getSelectedText();
-            if (text) {
-                showFloatingWindow(text);
-                sendResponse({ success: true });
-            } else {
-                sendResponse({ success: false, error: "No text selected" });
-            }
-        }
-    } else if (message.type === "FAST_TEXT_CLOSE") {
-        closeWindow();
-        sendResponse({ success: true });
+  if (message.type === "FAST_TEXT_OPEN") {
+    const text = message.text || getSelectedText();
+    if (text && text.length > 0) {
+      showFloatingWindow(text);
+      sendResponse({ success: true });
+    } else {
+      sendResponse({ success: false, error: "No text selected" });
     }
+  } else if (message.type === "FAST_TEXT_TOGGLE") {
+    if (isVisible && player) {
+      player.toggle();
+      const playBtn = floatingWindow?.querySelector("#fast-text-play-btn") as HTMLButtonElement;
+      if (playBtn) {
+        playBtn.textContent = player.getIsPlaying() ? "⏸" : "▶";
+      }
+      sendResponse({ success: true, isPlaying: player.getIsPlaying() });
+    } else {
+      const text = getSelectedText();
+      if (text) {
+        showFloatingWindow(text);
+        sendResponse({ success: true });
+      } else {
+        sendResponse({ success: false, error: "No text selected" });
+      }
+    }
+  } else if (message.type === "FAST_TEXT_CLOSE") {
+    closeWindow();
+    sendResponse({ success: true });
+  }
 }
 
 declare const chrome: {
-    runtime: {
-        onMessage: {
-            addListener: (callback: (message: { type: string; text?: string }, sender: unknown, sendResponse: (response?: Record<string, unknown>) => void) => void) => void;
-        };
+  runtime: {
+    onMessage: {
+      addListener: (callback: (message: { type: string; text?: string }, sender: unknown, sendResponse: (response?: Record<string, unknown>) => void) => void) => void;
     };
+  };
 };
 
 if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
-    chrome.runtime.onMessage.addListener(handleMessage);
-}
-
-function isExtensionContext(): boolean {
-    try {
-        return typeof chrome !== "undefined" && chrome.runtime && (chrome.runtime as { id?: unknown }).id !== undefined;
-    } catch {
-        return false;
-    }
+  chrome.runtime.onMessage.addListener(handleMessage);
 }
