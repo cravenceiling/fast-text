@@ -132,7 +132,6 @@ function createFloatingWindow(): HTMLElement {
         }
         #fast-text-before, #fast-text-after {
           display: inline;
-          color: #666;
         }
        #fast-text-floating-window.fast-text-fullscreen #fast-text-display {
          font-size: 48px;
