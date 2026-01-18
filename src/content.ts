@@ -121,9 +121,57 @@ function createFloatingWindow(): HTMLElement {
           justify-content: center;
           align-items: center;
           position: relative;
+          padding-top: 10px;
+          padding-bottom: 10px;
           width: 100%;
           font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
         }
+        #fast-text-anchor {
+          color: #ff4444;
+          font-weight: bold;
+          display: inline;
+          z-index: 2;
+        }
+        #fast-text-before, #fast-text-after {
+          display: inline;
+        }
+           .fast-text-guideline {
+             position: absolute;
+             left: 50%;
+             transform: translateX(-50%);
+             width: 3px;
+             background-color: #ff4444;
+             pointer-events: none;
+             z-index: 1;
+           }
+           .fast-text-guideline-top {
+             top: -20px;
+             height: 20px;
+           }
+           .fast-text-guideline-top::before {
+             content: '';
+             position: absolute;
+             bottom: 0;
+             left: 50%;
+             transform: translateX(-50%);
+             height: 4px;
+             background-color: #222;
+             width: 256px;
+           }
+           .fast-text-guideline-bottom {
+             bottom: -20px;
+             height: 20px;
+           }
+           .fast-text-guideline-bottom::before {
+             content: '';
+             position: absolute;
+             top: 0;
+             left: 50%;
+             transform: translateX(-50%);
+             height: 4px;
+             background-color: #222;
+             width: 256px;
+           }
         #fast-text-anchor {
           color: #ff4444;
           font-weight: bold;
@@ -250,7 +298,9 @@ function renderDisplay(display: FastTextDisplay): void {
     wordContainer.innerHTML = `<span id="fast-text-placeholder">No text selected</span>`;
   } else {
     wordContainer.innerHTML = `
+      <div class="fast-text-guideline fast-text-guideline-top"></div>
       <span id="fast-text-before">${escapeHtml(display.before)}</span><span id="fast-text-anchor">${escapeHtml(display.anchor)}</span><span id="fast-text-after">${escapeHtml(display.after)}</span>
+      <div class="fast-text-guideline fast-text-guideline-bottom"></div>
     `;
 
     requestAnimationFrame(() => {

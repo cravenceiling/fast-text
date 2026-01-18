@@ -17,6 +17,7 @@ export class FastTextPlayer {
   private words: string[] = [];
   private currentIndex: number = 0;
   private isPlaying: boolean = false;
+  private hasCompleted: boolean = false;
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private wpm: number = 300;
   private anchorPos: number = 0;
@@ -38,6 +39,7 @@ export class FastTextPlayer {
     this.text = (text || "").trim();
     this.words = this.text.split(/\s+/).filter(w => w.length > 0);
     this.currentIndex = 0;
+    this.hasCompleted = false;
   }
 
   start(): void {
@@ -55,7 +57,10 @@ export class FastTextPlayer {
   }
 
   toggle(): void {
-    if (this.isPlaying) {
+    if (this.hasCompleted) {
+      this.reset();
+      this.start();
+    } else if (this.isPlaying) {
       this.pause();
     } else {
       this.start();
@@ -101,6 +106,7 @@ export class FastTextPlayer {
       this.currentIndex++;
 
       if (this.currentIndex >= this.words.length) {
+        this.hasCompleted = true;
         this.pause();
         this.onComplete();
         return;
